@@ -15,13 +15,13 @@ services:
      - /run:/run
      - /var:/var:rshared,rbind
      - /var/lib/kubeadm:/etc/kubernetes
-     - /var/lib/cni/etc:/etc/cni:rshared,rbind
+     - /var/lib/cni/conf:/etc/cni/net.d:rshared,rbind
      - /var/lib/cni/opt:/opt/cni:rshared,rbind
      - /var/lib/kubelet-plugins:/usr/libexec/kubernetes/kubelet-plugins:rshared,rbind
     rootfsPropagation: shared
     command: ["/usr/local/bin/docker-init", "/usr/local/bin/dockerd"]
     runtime:
-      mkdir: ["/var/lib/kubeadm", "/var/lib/cni/etc", "/var/lib/cni/opt", "/var/lib/kubelet-plugins"]
+      mkdir: ["/var/lib/kubeadm", "/var/lib/cni/conf", "/var/lib/cni/opt", "/var/lib/kubelet-plugins"]
   - name: kubernetes-docker-image-cache-common
     image: linuxkit/kubernetes-docker-image-cache-common:3ca0a9d79ab2a99bd509621bf435ffdfa2f52730
 files:

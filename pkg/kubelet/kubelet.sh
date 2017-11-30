@@ -63,6 +63,24 @@ echo "kubelet.sh: ${await} has arrived" 2>&1
 
 mkdir -p /etc/kubernetes/manifests
 
+if [ -n ${CONTAINERIZED_MOUNTER_HOME} ]; then
+    echo "mount mounter: ${CONTAINERIZED_MOUNTER_HOME}"
+    CONTAINERIZED_MOUNTER_ROOTFS="${CONTAINERIZED_MOUNTER_HOME}"/rootfs
+    mkdir -p /var/lib/kubelet
+    mkdir -p "${CONTAINERIZED_MOUNTER_ROOTFS}"/var/lib/kubelet
+    mkdir -p "${CONTAINERIZED_MOUNTER_ROOTFS}"/proc
+    mkdir -p "${CONTAINERIZED_MOUNTER_ROOTFS}"/dev
+    mkdir -p "${CONTAINERIZED_MOUNTER_ROOTFS}"/etc
+    touch "${CONTAINERIZED_MOUNTER_ROOTFS}"/etc/resolv.conf
+    mount --bind "${CONTAINERIZED_MOUNTER_HOME}" "${CONTAINERIZED_MOUNTER_HOME}"
+    mount -o remount,exec "${CONTAINERIZED_MOUNTER_HOME}"
+    mount --rbind /var/lib/kubelet "${CONTAINERIZED_MOUNTER_ROOTFS}"/var/lib/kubelet
+    mount --bind -o ro /etc/resolv.conf "${CONTAINERIZED_MOUNTER_ROOTFS}"/etc/resolv.conf
+    mount --bind -o ro /proc "${CONTAINERIZED_MOUNTER_ROOTFS}"/proc
+    mount --bind -o ro /dev "${CONTAINERIZED_MOUNTER_ROOTFS}"/dev
+    MOUNTER_ARGS="--experimental-mounter-path=${CONTAINERIZED_MOUNTER_HOME}/mounter --experimental-check-node-capabilities-before-mount=true"
+fi
+
 exec kubelet --kubeconfig=/etc/kubernetes/kubelet.conf \
 	      --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf \
 	      --pod-manifest-path=/etc/kubernetes/manifests \
@@ -75,4 +93,4 @@ exec kubelet --kubeconfig=/etc/kubernetes/kubelet.conf \
 	      --cni-conf-dir=/var/lib/cni/etc/net.d \
 	      --cni-bin-dir=/var/lib/cni/opt/bin \
 	      --cadvisor-port=0 \
-	      $KUBELET_ARGS $@
+	      $KUBELET_ARGS $MOUNTER_ARGS $@
